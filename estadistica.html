@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sustentación · Rendimiento & Gasto · UCC Pasto</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:       #0a0c14;
+  --bg2:      #10131f;
+  --bg3:      #161927;
+  --card:     #1a1e30;
+  --card2:    #1f2438;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.13);
+
+  --amber:    #c97d3e;
+  --amber2:   #e8a05a;
+  --amber3:   #f5c27a;
+  --sky:      #5bb8f5;
+  --sky2:     #88cff7;
+  --mint:     #4ecba0;
+  --lav:      #9b86f5;
+  --rose:     #e86b8a;
+  --gold:     #f5d060;
+
+  --text:     #f0ead8;
+  --text2:    #a8a2b8;
+  --text3:    #6b6580;
+
+  --fh: 'Playfair Display', Georgia, serif;
+  --fb: 'DM Sans', sans-serif;
+  --fm: 'DM Mono', monospace;
+
+  --r-sm: 8px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--fb);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* NOISE */
+body::before {
+  content:''; position:fixed; inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none; z-index:9999; opacity:0.4;
+}
+
+/* PROGRESS BAR */
+#progress { position:fixed; top:0; left:0; height:2px; background:linear-gradient(90deg,var(--amber),var(--sky)); z-index:10000; width:0; transition:width .1s; }
+
+/* SIDEBAR */
+.sidebar {
+  position:fixed; left:0; top:0; bottom:0; width:220px;
+  background:var(--bg2); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; padding:28px 0; z-index:100;
+}
+.sidebar-logo { padding:0 20px 24px; border-bottom:1px solid var(--border); margin-bottom:20px; }
+.sidebar-logo .ico { font-size:24px; margin-bottom:6px; display:block; }
+.sidebar-logo h3 { font-family:var(--fh); font-size:12px; color:var(--amber2); line-height:1.4; }
+.nav-sec { font-size:9px; font-weight:700; letter-spacing:.14em; color:var(--text3); text-transform:uppercase; padding:0 20px 8px; margin-top:8px; }
+.nav-item {
+  display:flex; align-items:center; gap:8px; padding:9px 20px;
+  color:var(--text2); font-size:12.5px; cursor:pointer; text-decoration:none;
+  border-left:2px solid transparent; transition:all .2s;
+}
+.nav-item:hover, .nav-item.active { color:var(--amber2); background:rgba(201,125,62,.07); border-left-color:var(--amber2); }
+.nav-item .dot { width:5px; height:5px; border-radius:50%; background:var(--text3); flex-shrink:0; transition:all .2s; }
+.nav-item:hover .dot, .nav-item.active .dot { background:var(--amber2); box-shadow:0 0 6px rgba(201,125,62,.6); }
+.nav-item.sky-theme:hover, .nav-item.sky-theme.active { color:var(--sky); background:rgba(91,184,245,.07); border-left-color:var(--sky); }
+.nav-item.sky-theme:hover .dot, .nav-item.sky-theme.active .dot { background:var(--sky); box-shadow:0 0 6px rgba(91,184,245,.6); }
+
+/* MAIN */
+.main { margin-left:220px; }
+
+/* HERO */
+.hero {
+  position:relative; min-height:92vh;
+  display:flex; align-items:center; padding:60px 56px;
+  overflow:hidden;
+  border-bottom:1px solid var(--border);
+}
+.hero-bg {
+  position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 70% 60% at 80% 40%, rgba(201,125,62,.13) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 70% at 10% 90%, rgba(91,184,245,.08) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 10%, rgba(155,134,245,.07) 0%, transparent 60%);
+}
+.hero-content { position:relative; z-index:1; max-width:700px; }
+.hero-chip {
+  display:inline-flex; align-items:center; gap:8px;
+  background:rgba(201,125,62,.12); border:1px solid rgba(201,125,62,.3);
+  border-radius:100px; padding:5px 14px;
+  font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--amber2); margin-bottom:24px;
+  animation:fadeUp .7s ease both;
+}
+.hero h1 {
+  font-family:var(--fh); font-size:clamp(34px,5vw,58px);
+  font-weight:900; line-height:1.08; letter-spacing:-.02em;
+  margin-bottom:14px; animation:fadeUp .7s .1s ease both;
+}
+.hero h1 .a { background:linear-gradient(135deg,var(--amber),var(--amber3)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.hero h1 .b { background:linear-gradient(135deg,var(--sky),var(--sky2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.hero-sub { font-size:14px; color:var(--text2); line-height:1.75; max-width:560px; margin-bottom:36px; animation:fadeUp .7s .2s ease both; }
+.hero-pills { display:flex; gap:10px; flex-wrap:wrap; animation:fadeUp .7s .3s ease both; }
+.pill {
+  display:inline-block; border-radius:100px; font-size:11px;
+  font-weight:600; padding:4px 12px;
+}
+.p-am { background:rgba(201,125,62,.15); color:var(--amber2); border:1px solid rgba(201,125,62,.25); }
+.p-sk { background:rgba(91,184,245,.15); color:var(--sky); border:1px solid rgba(91,184,245,.25); }
+.p-mt { background:rgba(78,203,160,.15); color:var(--mint); border:1px solid rgba(78,203,160,.25); }
+.p-lv { background:rgba(155,134,245,.15); color:var(--lav); border:1px solid rgba(155,134,245,.25); }
+.p-ro { background:rgba(232,107,138,.15); color:var(--rose); border:1px solid rgba(232,107,138,.25); }
+
+.hero-floats {
+  position:absolute; right:56px; bottom:56px;
+  display:flex; gap:16px;
+  animation:fadeUp .7s .4s ease both;
+}
+.float-card {
+  background:rgba(255,255,255,.04); border:1px solid var(--border);
+  border-radius:var(--r-md); padding:18px 24px; text-align:center;
+  backdrop-filter:blur(12px);
+}
+.float-num { font-family:var(--fh); font-size:32px; font-weight:700; line-height:1; display:block; }
+.float-lbl { font-size:10px; color:var(--text3); margin-top:4px; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+/* SECTION */
+.section { padding:72px 56px; border-top:1px solid var(--border); }
+.section-header { display:flex; align-items:flex-start; gap:16px; margin-bottom:40px; }
+.sec-num { font-family:var(--fm); font-size:10px; color:var(--text3); letter-spacing:.1em; padding-top:6px; min-width:28px; }
+.sec-title { font-family:var(--fh); font-size:clamp(22px,3vw,32px); font-weight:700; line-height:1.2; letter-spacing:-.01em; }
+.sec-desc { font-size:13px; color:var(--text2); margin-top:8px; line-height:1.75; max-width:640px; }
+
+/* CARD */
+.card { background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg); padding:24px; transition:border-color .3s, box-shadow .3s; }
+.card:hover { border-color:var(--border2); }
+.card-title { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text3); margin-bottom:14px; }
+
+/* GRIDS */
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.g3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.g4 { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.gauto { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; }
+
+/* STAT CARD */
+.sc {
+  background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
+  padding:20px 22px; position:relative; overflow:hidden; transition:all .3s;
+}
+.sc::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+.sc.am::before { background:linear-gradient(90deg,var(--amber),var(--amber3)); }
+.sc.sk::before { background:linear-gradient(90deg,var(--sky),var(--sky2)); }
+.sc.mt::before { background:linear-gradient(90deg,var(--mint),#a0f5d8); }
+.sc.lv::before { background:linear-gradient(90deg,var(--lav),#c4b8ff); }
+.sc.ro::before { background:linear-gradient(90deg,var(--rose),#f5a0b8); }
+.sc.gd::before { background:linear-gradient(90deg,var(--gold),#ffe8a0); }
+.sc:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(0,0,0,.3); }
+.sc-lbl { font-size:10px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px; }
+.sc-val { font-family:var(--fh); font-size:30px; font-weight:700; line-height:1; margin-bottom:3px; }
+.sc.am .sc-val { color:var(--amber2); }
+.sc.sk .sc-val { color:var(--sky); }
+.sc.mt .sc-val { color:var(--mint); }
+.sc.lv .sc-val { color:var(--lav); }
+.sc.ro .sc-val { color:var(--rose); }
+.sc.gd .sc-val { color:var(--gold); }
+.sc-sub { font-size:11px; color:var(--text3); }
+
+/* CHART WRAP */
+.cw { background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg); padding:24px; }
+.cw-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.cw-title { font-size:13px; font-weight:600; }
+.cw-badge { font-family:var(--fm); font-size:9px; background:rgba(201,125,62,.1); color:var(--amber2); border:1px solid rgba(201,125,62,.2); border-radius:100px; padding:3px 9px; }
+.cw-badge.sk { background:rgba(91,184,245,.1); color:var(--sky); border-color:rgba(91,184,245,.2); }
+.cw-badge.mt { background:rgba(78,203,160,.1); color:var(--mint); border-color:rgba(78,203,160,.2); }
+.cw-badge.lv { background:rgba(155,134,245,.1); color:var(--lav); border-color:rgba(155,134,245,.2); }
+
+/* BAR CHART */
+.barchart { display:flex; flex-direction:column; gap:11px; }
+.bar-row { display:flex; align-items:center; gap:10px; }
+.bar-lbl { font-size:11px; color:var(--text2); min-width:150px; text-align:right; }
+.bar-track { flex:1; height:7px; background:rgba(255,255,255,.05); border-radius:100px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:100px; width:0; transition:width 1.2s cubic-bezier(.16,1,.3,1); }
+.bar-pct { font-family:var(--fm); font-size:10px; color:var(--text3); min-width:40px; }
+
+/* TABLE */
+.tbl { width:100%; border-collapse:collapse; font-size:12px; }
+.tbl th { text-align:left; font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text3); padding:10px 14px; border-bottom:1px solid var(--border); }
+.tbl td { padding:10px 14px; border-bottom:1px solid rgba(255,255,255,.04); color:var(--text2); }
+.tbl tr:last-child td { border-bottom:none; }
+.tbl tr:hover td { background:rgba(255,255,255,.02); color:var(--text); }
+.tbl .n { font-family:var(--fm); font-size:11px; color:var(--amber2); }
+.tbl .n.sk { color:var(--sky); }
+.tbl .n.mt { color:var(--mint); }
+.tbl .n.ro { color:var(--rose); }
+.tbl .n.lv { color:var(--lav); }
+.tbl .hl { color:var(--text); font-weight:500; }
+
+/* REVEAL */
+.reveal { opacity:0; transform:translateY(28px); transition:opacity .7s ease, transform .7s ease; }
+.reveal.visible { opacity:1; transform:translateY(0); }
+
+/* INSIGHT BOX */
+.insight {
+  padding:18px 20px; border-radius:var(--r-md);
+  border-left:3px solid;
+  margin-bottom:10px;
+}
+.insight.am { background:rgba(201,125,62,.07); border-color:var(--amber2); }
+.insight.sk { background:rgba(91,184,245,.07); border-color:var(--sky); }
+.insight.mt { background:rgba(78,203,160,.07); border-color:var(--mint); }
+.insight.ro { background:rgba(232,107,138,.07); border-color:var(--rose); }
+.insight.lv { background:rgba(155,134,245,.07); border-color:var(--lav); }
+.insight-tag { font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; margin-bottom:5px; }
+.insight.am .insight-tag { color:var(--amber2); }
+.insight.sk .insight-tag { color:var(--sky); }
+.insight.mt .insight-tag { color:var(--mint); }
+.insight.ro .insight-tag { color:var(--rose); }
+.insight.lv .insight-tag { color:var(--lav); }
+.insight p { font-size:12px; color:var(--text2); line-height:1.75; margin:0; }
+
+/* VERDICT BOX */
+.verdict {
+  background:linear-gradient(135deg,rgba(201,125,62,.1),rgba(245,194,122,.05));
+  border:1px solid rgba(201,125,62,.25);
+  border-radius:var(--r-xl); padding:32px 36px;
+  position:relative; overflow:hidden; margin-top:32px;
+}
+.verdict.sk-v {
+  background:linear-gradient(135deg,rgba(91,184,245,.1),rgba(78,203,160,.05));
+  border-color:rgba(91,184,245,.25);
+}
+.verdict::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 60% 60% at 50% 100%,rgba(201,125,62,.1) 0%,transparent 70%); pointer-events:none; }
+.verdict.sk-v::before { background:radial-gradient(ellipse 60% 60% at 50% 100%,rgba(91,184,245,.1) 0%,transparent 70%); }
+.verdict-tag { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--amber2); margin-bottom:12px; }
+.verdict.sk-v .verdict-tag { color:var(--sky); }
+.verdict p { font-size:13.5px; color:var(--text2); line-height:1.9; position:relative; margin:0; }
+
+/* SECTION DIVIDER */
+.sec-divider {
+  display:flex; align-items:center; gap:16px; margin:56px 0 40px;
+  padding:20px 28px;
+  border-radius:var(--r-xl); position:relative; overflow:hidden;
+}
+.sec-divider.q1 { background:linear-gradient(135deg,rgba(245,194,122,.08),rgba(201,125,62,.04)); border:1px solid rgba(201,125,62,.2); }
+.sec-divider.q2 { background:linear-gradient(135deg,rgba(91,184,245,.08),rgba(78,203,160,.04)); border:1px solid rgba(91,184,245,.2); }
+.sec-divider::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.sec-divider.q1::before { background:linear-gradient(90deg,var(--amber),var(--amber3)); }
+.sec-divider.q2::before { background:linear-gradient(90deg,var(--sky),var(--mint)); }
+.sec-divider .icon { width:52px; height:52px; border-radius:var(--r-md); display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0; }
+.sec-divider.q1 .icon { background:linear-gradient(135deg,rgba(245,194,122,.3),rgba(201,125,62,.15)); }
+.sec-divider.q2 .icon { background:linear-gradient(135deg,rgba(91,184,245,.3),rgba(78,203,160,.15)); }
+.sec-divider h3 { font-family:var(--fh); font-size:20px; color:var(--text); line-height:1.3; }
+.sec-divider p { font-size:12px; color:var(--text2); margin-top:3px; }
+
+/* LINKED LEGEND */
+.legend-row { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text2); margin-bottom:6px; }
+.legend-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+
+/* MONO FORMULA */
+.mono-box { background:var(--bg2); border:1px solid var(--border); border-radius:var(--r-md); padding:16px 20px; font-family:var(--fm); }
+.mono-box .lbl { font-size:9px; color:var(--text3); margin-bottom:6px; letter-spacing:.06em; text-transform:uppercase; }
+.mono-box .eq { font-size:13px; color:var(--text2); }
+.mono-box .res { font-size:20px; margin-top:6px; }
+
+/* PARADOX */
+.paradox-strip {
+  display:flex; align-items:stretch; border-radius:var(--r-lg); overflow:hidden;
+  border:1px solid var(--border); margin-bottom:18px;
+}
+.ps-left { background:rgba(78,203,160,.08); padding:20px 22px; flex:1; border-right:1px solid var(--border); }
+.ps-right { background:rgba(232,107,138,.08); padding:20px 22px; flex:1; }
+.ps-label { font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; margin-bottom:8px; }
+.ps-left .ps-label { color:var(--mint); }
+.ps-right .ps-label { color:var(--rose); }
+
+/* 📱 OPTIMIZACIONES DE RESPONSIVIDAD PARA MÓVILES (MEDIA QUERIES) */
+@media (max-width: 992px) {
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 16px 20px;
+    gap: 10px;
+  }
+  .sidebar-logo {
+    padding: 0 0 10px 0;
+    margin-bottom: 0;
+    border-bottom: none;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sidebar-logo h3 { font-size: 14px; }
+  .sidebar-logo .ico { margin-bottom: 0; }
+  .nav-sec { display: none; } /* Ocultar subtítulos para optimizar espacio superior */
+  .nav-item {
+    padding: 6px 14px;
+    border-left: none;
+    border-radius: var(--r-sm);
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 2px solid transparent;
+  }
+  .nav-item:hover, .nav-item.active {
+    border-left-color: transparent;
+    border-bottom-color: var(--amber2);
+  }
+  .nav-item.sky-theme:hover, .nav-item.sky-theme.active {
+    border-left-color: transparent;
+    border-bottom-color: var(--sky);
+  }
+  .main { margin-left: 0; }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 40px 20px;
+    min-height: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 32px;
+  }
+  .hero-floats {
+    position: static;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+  .float-card { flex: 1; min-width: 130px; padding: 14px; }
+  
+  .section { padding: 40px 20px; }
+  .section-header { flex-direction: column; gap: 8px; }
+  .sec-num { padding-top: 0; }
+  
+  /* Conversión de rejillas a layouts de una sola columna */
+  .g2, .g3, .g4, .gauto {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .paradox-strip { flex-direction: column; }
+  .ps-left { border-right: none; border-bottom: 1px solid var(--border); }
+  
+  /* Desborde horizontal seguro en tarjetas con tablas anchas */
+  .card { overflow-x: auto; }
+  .tbl { min-width: 480px; }
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <span class="ico">📊</span>
+    <h3>Sustentación Estadística · UCC</h3>
+  </div>
+  <div class="nav-sec">Rendimiento</div>
+  <a class="nav-item" href="#rend-overview"><span class="dot"></span>Distribución</a>
+  <a class="nav-item" href="#rend-efectos"><span class="dot"></span>Cruce × Efectos</a>
+  <a class="nav-item" href="#rend-motivo"><span class="dot"></span>Cruce × Motivo</a>
+  <a class="nav-item" href="#rend-bebida"><span class="dot"></span>Cruce × Bebida</a>
+  <a class="nav-item" href="#rend-genero"><span class="dot"></span>Cruce × Género</a>
+  <a class="nav-item" href="#rend-conclusion"><span class="dot"></span>Conclusión Q1</a>
+  <div class="nav-sec">Gasto</div>
+  <a class="nav-item sky-theme" href="#gasto-overview"><span class="dot"></span>Distribución</a>
+  <a class="nav-item sky-theme" href="#gasto-frecuencia"><span class="dot"></span>Cruce × Frecuencia</a>
+  <a class="nav-item sky-theme" href="#gasto-motivo"><span class="dot"></span>Cruce × Motivo</a>
+  <a class="nav-item sky-theme" href="#gasto-efectos"><span class="dot"></span>Cruce × Efectos</a>
+  <a class="nav-item sky-theme" href="#gasto-conclusion"><span class="dot"></span>Conclusión Q2</a>
+  <div class="nav-sec">Conexión</div>
+  <a class="nav-item" href="#conexion"><span class="dot"></span>Cruce Q1 × Q2</a>
+</nav>
+
+<main class="main">
+
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <div class="hero-chip">☕ Análisis de Sustentación · Probabilidad y Estadística · UCC Pasto</div>
+    <h1>Sustentación completa<br>de las <span class="a">dos preguntas</span><br><span class="b">asignadas</span></h1>
+    <p class="hero-sub">
+      Análisis estadístico profundo con frecuencias reales, tablas cruzadas y gráficos derivados directamente de las 80 respuestas de la encuesta. Todo lo necesario para responder y defender con datos.
+    </p>
+    <div class="hero-pills">
+      <span class="pill p-am">n = 80 encuestados</span>
+      <span class="pill p-sk">Datos reales del CSV</span>
+      <span class="pill p-mt">10 gráficos cruzados</span>
+      <span class="pill p-lv">Variable nominal × ordinal</span>
+    </div>
+  </div>
+  <div class="hero-floats">
+    <div class="float-card">
+      <span class="float-num" style="color:var(--amber2);">55%</span>
+      <div class="float-lbl">Sin efecto percibido</div>
+    </div>
+    <div class="float-card">
+      <span class="float-num" style="color:var(--sky);">33.8%</span>
+      <div class="float-lbl">Gasta $3k–$10k/sem</div>
+    </div>
+    <div class="float-card">
+      <span class="float-num" style="color:var(--rose);">45.5%</span>
+      <div class="float-lbl">Mejora + tiene efectos</div>
+    </div>
+  </div>
+</section>
+
+<section class="section reveal" id="rend-overview">
+  <div class="section-header">
+    <div class="sec-num">01</div>
+    <div>
+      <h2 class="sec-title" style="color:var(--text);">Pregunta 1 · <span style="color:var(--amber2);">Percepción del rendimiento académico</span></h2>
+      <p class="sec-desc">¿Cómo consideras que estas bebidas afectan tu rendimiento académico? — Variable cualitativa nominal, 4 categorías, n = 80.</p>
+    </div>
+  </div>
+
+  <div class="g4" style="margin-bottom:20px;">
+    <div class="sc am"><div class="sc-lbl">No tiene efecto · Moda</div><div class="sc-val">55.0%</div><div class="sc-sub">f = 44 · H = 55.0%</div></div>
+    <div class="sc lv"><div class="sc-lbl">No estoy seguro/a</div><div class="sc-val">30.0%</div><div class="sc-sub">f = 24 · H acum = 85.0%</div></div>
+    <div class="sc mt"><div class="sc-lbl">Mejora mi rendimiento</div><div class="sc-val">13.8%</div><div class="sc-sub">f = 11 · H acum = 98.8%</div></div>
+    <div class="sc ro"><div class="sc-lbl">Lo empeora</div><div class="sc-val">1.2%</div><div class="sc-sub">f = 1 · H acum = 100%</div></div>
+  </div>
+
+  <div class="g2" style="margin-bottom:20px;">
+    <div class="cw">
+      <div class="cw-head">
+        <span class="cw-title">Distribución completa · Percepción del rendimiento</span>
+        <span class="cw-badge">Gráfico de barras · n = 80</span>
+      </div>
+      <canvas id="chartRendDist" height="240"></canvas>
+      <div style="margin-top:16px;" class="barchart">
+        <div class="bar-row"><div class="bar-lbl">No tiene efecto</div><div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,#f5c27a,#e8a05a);" data-w="55"></div></div><div class="bar-pct">55.0%</div></div>
+        <div class="bar-row"><div class="bar-lbl">No estoy seguro/a</div><div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,#9b86f5,#c4b8ff);" data-w="30"></div></div><div class="bar-pct">30.0%</div></div>
+        <div class="bar-row"><div class="bar-lbl">Mejora mi rendimiento</div><div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,#4ecba0,#a0f5d8);" data-w="13.8"></div></div><div class="bar-pct">13.8%</div></div>
+        <div class="bar-row"><div class="bar-lbl">Lo empeora</div><div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,#e86b8a,#f5a0b8);" data-w="1.2"></div></div><div class="bar-pct">1.2%</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Tabla de frecuencias · Rendimiento académico</div>
+      <table class="tbl" style="margin-top:10px;">
+        <thead><tr><th>Categoría (xᵢ)</th><th>fᵢ</th><th>Fᵢ (acum)</th><th>hᵢ</th><th>Hᵢ</th><th>hᵢ%</th></tr></thead>
+        <tbody>
+          <tr><td class="hl" style="color:var(--amber3);">No tiene efecto ★ Moda</td><td class="n">44</td><td class="n">44</td><td class="n">0.550</td><td class="n">0.550</td><td class="n" style="color:var(--amber2);">55.0%</td></tr>
+          <tr><td class="hl" style="color:var(--lav);">No estoy seguro/a</td><td class="n lv">24</td><td class="n lv">68</td><td class="n lv">0.300</td><td class="n lv">0.850</td><td class="n lv">30.0%</td></tr>
+          <tr><td class="hl" style="color:var(--mint);">Mejora mi rendimiento</td><td class="n mt">11</td><td class="n mt">79</td><td class="n mt">0.138</td><td class="n mt">0.988</td><td class="n mt">13.8%</td></tr>
+          <tr><td class="hl" style="color:var(--rose);">Lo empeora</td><td class="n ro">1</td><td class="n ro">80</td><td class="n ro">0.013</td><td class="n ro">1.000</td><td class="n ro">1.2%</td></tr>
+          <tr style="background:rgba(201,125,62,.06);font-weight:600;"><td style="color:var(--amber2);">Total</td><td class="n">80</td><td class="n">—</td><td class="n">1.000</td><td class="n">—</td><td class="n" style="color:var(--amber2);">100%</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:16px;padding:12px 14px;background:rgba(155,134,245,.07);border-radius:var(--r-md);border:1px solid rgba(155,134,245,.15);">
+        <div style="font-size:10px;color:var(--lav);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px;">📐 Nota tipo de variable</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.7;">Variable <strong style="color:var(--text);">cualitativa nominal</strong> → las categorías no tienen orden numérico. La única medida de tendencia central válida es la <strong style="color:var(--text);">Moda</strong>. No se calculan media ni mediana.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section reveal" id="rend-efectos">
+  <div class="section-header">
+    <div class="sec-num">01.A</div>
+    <div>
+      <h2 class="sec-title">Rendimiento × <span style="color:var(--rose);">Efectos secundarios</span></h2>
+      <p class="sec-desc">¿Los estudiantes que dicen que mejora su rendimiento también reportan efectos adversos? Cruce que revela la paradoja central.</p>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:20px;">
+    <div class="cw">
+      <div class="cw-head">
+        <span class="cw-title">% con efectos secundarios por grupo de percepción</span>
+        <span class="cw-badge lv">Datos reales n = 80</span>
+      </div>
+      <canvas id="chartRendEfectos" height="280"></canvas>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="paradox-strip">
+        <div class="ps-left">
+          <div class="ps-label">✅ Dicen que mejora (n=11)</div>
+          <div style="font-family:var(--fh);font-size:40px;color:var(--mint);line-height:1;">45.5%</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:4px;">5 de 11 reportan ansiedad / insomnio</div>
+        </div>
+        <div class="ps-right">
+          <div class="ps-label">⚠️ No tiene efecto (n=44)</div>
+          <div style="font-family:var(--fh);font-size:40px;color:var(--rose);line-height:1;">20.5%</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:4px;">9 de 44 reportan efectos adversos</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📋 Tabla cruzada · Rendimiento × Efectos</div>
+        <table class="tbl" style="margin-top:8px;">
+          <thead><tr><th>Percepción</th><th>n</th><th>Sin efectos</th><th>Con efectos</th><th>% efectos</th></tr></thead>
+          <tbody>
+            <tr><td class="hl" style="color:var(--amber3);">No tiene efecto</td><td class="n">44</td><td class="n mt">35</td><td class="n ro">9</td><td class="n ro">20.5%</td></tr>
+            <tr><td class="hl" style="color:var(--lav);">No estoy seguro/a</td><td class="n lv">24</td><td class="n mt">15</td><td class="n ro">9</td><td class="n ro">37.5%</td></tr>
+            <tr><td class="hl" style="color:var(--mint);">Mejora rendimiento</td><td class="n mt">11</td><td class="n mt">6</td><td class="n ro">5</td><td class="n ro" style="color:var(--rose);font-weight:700;">45.5%</td></tr>
+            <tr><td class="hl" style="color:var(--rose);">Lo empeora</td><td class="n ro">1</td><td class="n mt">1</td><td class="n">0</td><td class="n">0%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="insight ro">
+        <div class="insight-tag">🔑 Insight clave</div>
+        <p>Los estudiantes que <strong style="color:var(--text);">perciben mejora</strong> tienen el mayor porcentaje de efectos adversos (45.5%). A mayor percepción de beneficio, mayor exposición a riesgos. Esto puede deberse al mayor consumo de energéticas combinadas con café.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section reveal" id="rend-motivo">
+  <div class="section-header">
+    <div class="sec-num">01.B</div>
+    <div>
+      <h2 class="sec-title">Rendimiento × <span style="color:var(--lav);">Motivo de consumo</span></h2>
+      <p class="sec-desc">El motivo explica la percepción: quienes consumen para "mantenerse despiertos" son el 91% del grupo que dice que mejora su rendimiento.</p>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:20px;">
+    <div class="cw">
+      <div class="cw-head">
+        <span class="cw-title">Motivo de consumo por grupo de percepción</span>
+        <span class="cw-badge lv">Barras apiladas · n = 80</span>
+      </div>
+      <canvas id="chartRendMotivo" height="300"></canvas>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card">
+        <div class="card-title">📋 Tabla cruzada · Rendimiento × Motivo</div>
+        <table class="tbl" style="margin-top:8px;">
+          <thead><tr><th>Percepción</th><th>Costumbre</th><th>Despierto</th><th>Sabor</th><th>Otro</th><th>Conc.</th></tr></thead>
+          <tbody>
+            <tr><td class="hl" style="color:var(--amber3);">No tiene efecto</td><td class="n">22</td><td class="n">9</td><td class="n">10</td><td class="n">1</td><td class="n">2</td></tr>
+            <tr><td class="hl" style="color:var(--lav);">No estoy seguro</td><td class="n lv">8</td><td class="n lv">8</td><td class="n lv">3</td><td class="n lv">5</td><td class="n">0</td></tr>
+            <tr><td class="hl" style="color:var(--mint);">Mejora rendimiento</td><td class="n">1</td><td class="n mt" style="font-weight:700;">10</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
+            <tr><td class="hl" style="color:var(--rose);">Lo empeora</td><td class="n ro">1</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="insight mt">
+        <div class="insight-tag">🎯 Hallazgo decisivo</div>
+        <p><strong style="color:var(--text);">10 de 11 (90.9%)</strong> de los que dicen que mejora su rendimiento consumen para "mantenerse despiertos". Esto confirma que la percepción de mejora es en realidad <strong style="color:var(--text);">efecto estimulante temporal</strong>, no mejora académica real.</p>
+      </div>
+      <div class="insight am">
+        <div class="insight-tag">📊 Grupo mayoritario</div>
+        <p>En el grupo "No tiene efecto", el motivo más frecuente es <strong style="color:var(--text);">Costumbre (22/44 = 50%)</strong>, evidenciando consumo habitual desvinculado de cualquier objetivo académico.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section reveal" id="rend-bebida">
+  <div class="section-header">
+    <div class="sec-num">01.C</div>
+    <div>
+      <h2 class="sec-title">Rendimiento × <span style="color:var(--mint);">Tipo de bebida</span></h2>
+      <p class="sec-desc">El tipo de bebida consumida se relaciona directamente con la percepción de mejora: los que combinan café + energéticas son mayoría en ese grupo.</p>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:20px;">
+    <div class="cw">
+      <div class="cw-head">
+        <span class="cw-title">Bebida por grupo de percepción del rendimiento</span>
+        <span class="cw-badge mt">Datos reales</span>
+      </div>
+      <canvas id="chartRendBebida" height="300"></canvas>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card">
+        <div class="card-title">📋 Tabla cruzada · Rendimiento × Bebida</div>
+        <table class="tbl" style="margin-top:8px;">
+          <thead><tr><th>Percepción</th><th>Solo Café</th><th>Café+Energ.</th><th>Solo Energ.</th><th>Ninguna</th></tr></thead>
+          <tbody>
+            <tr><td class="hl" style="color:var(--amber3);">No tiene efecto</td><td class="n">28</td><td class="n">9</td><td class="n">4</td><td class="n">3</td></tr>
+            <tr><td class="hl" style="color:var(--lav);">No estoy seguro</td><td class="n lv">9</td><td class="n lv">7</td><td class="n lv">6</td><td class="n lv">2</td></tr>
+            <tr><td class="hl" style="color:var(--mint);">Mejora rendimiento</td><td class="n">1</td><td class="n mt" style="font-weight:700;">7</td><td class="n mt">3</td><td class="n">0</td></tr>
+            <tr><td class="hl" style="color:var(--rose);">Lo empeora</td><td class="n ro">1</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="insight mt">
+        <div class="insight-tag">⚡ Perfil del grupo "Mejora"</div>
+        <p><strong style="color:var(--text);">9 de 11 (81.8%)</strong> de quienes dicen que mejora su rendimiento consumen <strong style="color:var(--text);">energéticas</strong> (solas o combinadas con café). Las energéticas tienen mayor concentración de cafeína y taurina, lo que genera efectos estimulantes más marcados.</p>
+      </div>
+      <div class="insight lv">
+        <div class="insight-tag">🔍 Contraste</div>
+        <p>En el grupo "No tiene efecto", el <strong style="color:var(--text);">63.6% (28/44) solo toma café</strong>. El café tiene efecto estimulante más moderado y predecible, lo que explica la percepción neutra.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section reveal" id="rend-genero">
+  <div class="section-header">
+    <div class="sec-num">01.D</div>
+    <div>
+      <h2 class="sec-title">Rendimiento × <span style="color:var(--sky);">Género</span></h2>
+      <p class="sec-desc">Los hombres reportan percepción de mejora casi tres veces más que las mujeres. Variable de control importante para contextualizar resultados.</p>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:20px;">
+    <div class="cw">
+      <div class="cw-head">
+        <span class="cw-title">Percepción del rendimiento por género</span>
+        <span class="cw-badge sk">Comparación proporcional</span>
+      </div>
+      <canvas id="chartRendGenero" height="280"></canvas>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card">
+        <div class="card-title">📋 Tabla cruzada · Rendimiento × Género</div>
+        <table class="tbl" style="margin-top:8px;">
+          <thead><tr><th>Género</th><th>n</th><th>No efecto</th><th>Inseguro</th><th>Mejora</th><th>Empeora</th><th>% Mejora</th></tr></thead>
+          <tbody>
+            <tr><td class="hl" style="color:var(--sky);">Femenino</td><td class="n sk">40</td><td class="n">23</td><td class="n lv">13</td><td class="n mt">3</td><td class="n ro">1</td><td class="n mt">7.5%</td></tr>
+            <tr><td class="hl" style="color:var(--amber2);">Masculino</td><td class="n">38</td><td class="n">20</td><td class="n lv">10</td><td class="n mt" style="font-weight:700;">8</td><td class="n">0</td><td class="n mt" style="font-weight:700;">21.1%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="insight sk">
+        <div class="insight-tag">📐 Diferencia de género</div>
+        <p>El <strong style="color:var(--text);">21.1% de los hombres</strong> cree que mejora su rendimiento vs solo el <strong style="color:var(--text);">7.5% de las mujeres</strong>. Esta diferencia puede estar asociada al mayor consumo de energéticas en hombres (relacionado con el hallazgo anterior sobre bebidas).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section reveal" id="rend-conclusion">
+  <div class="section-header">
+    <div class="sec-num">01.Z</div>
+    <div>
+      <h2 class="sec-title">Conclusión Docente · <span style="color:var(--amber2);">Pregunta 1</span></h2>
+      <p class="sec-desc">Síntesis sustentada de todos los hallazgos sobre percepción del rendimiento académico.</p>
+    </div>
+  </div>
+
+  <div class="g3" style="margin-bottom:20px;">
+    <div class="insight am" style="border-radius:var(--r-lg);padding:20px 22px;">
+      <div class="insight-tag">1. Distribución principal</div>
+      <p>La <strong style="color:var(--text);">moda es "No tiene efecto"</strong> con f=44 (55%). Al ser variable nominal, es la única medida de tendencia central válida. El 85% agrupa las categorías neutral e incierta, confirmando que el consumo no está vinculado a objetivos académicos.</p>
+    </div>
+    <div class="insight ro" style="border-radius:var(--r-lg);padding:20px 22px;">
+      <div class="insight-tag">2. La paradoja de la mejora</div>
+      <p>El grupo que dice que mejora (13.8%) es paradójicamente el que <strong style="color:var(--text);">más efectos adversos tiene (45.5%)</strong>, consume más energéticas (81.8%) y su motivo principal es "mantenerse despierto" (90.9%). La percepción de mejora es efecto estimulante, no rendimiento real.</p>
+    </div>
+    <div class="insight lv" style="border-radius:var(--r-lg);padding:20px 22px;">
+      <div class="insight-tag">3. Sesgo de atribución</div>
+      <p>Solo 1 estudiante (1.2%) admite empeoramiento, pero el 29.1% reporta efectos adversos. Los estudiantes <strong style="color:var(--text);">no conectan ansiedad e insomnio</strong> con su desempeño académico, lo que constituye un sesgo de atribución sistemático.</p>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <div class="verdict-tag">🎓 Respuesta completa · Para sustentar ante el docente</div>
+    <p>
+      La variable <em>"percepción del rendimiento académico"</em> (cualitativa nominal, n=80) muestra que el consumo de bebidas estimulantes en la UCC Campus Pasto <strong style="color:var(--text);">no es percibido como herramienta académica deliberada</strong>[cite: 14]. La moda "No tiene efecto" (f=44, h=55%) junto al 30% de incertidumbre, ubica al <strong style="color:var(--amber2);">85% de los estudiantes fuera de una motivación de rendimiento</strong>. El análisis cruzado revela una paradoja crítica: el grupo que sí percibe mejora (13.8%) tiene el <strong style="color:var(--text);">perfil de mayor riesgo</strong>: 45.5% con efectos adversos, 90.9% consumen para mantenerse despiertos y 81.8% usan energéticas. Esto indica que confunden el <strong style="color:var(--amber2);">efecto estimulante temporal con mejora académica real</strong>. Estadísticamente, la distribución asimétrica (muy pocos en los extremos) y el alto porcentaje en la categoría modal reflejan tanto la <strong style="color:var(--text);">naturalización del consumo</strong> como una subestimación sistemática del daño.
+    </p>
+  </div>
+</section>
+
+
+<section class="section reveal" id="gasto-overview">
+  <div class="section-header">
+    <div class="sec-num">02</div>
+    <div>
+      <h2 class="sec-title">Pregunta 2 · <span style="color:var(--sky);">Gasto semanal en bebidas</span></h2>
+      <p class="sec-desc">¿Cuánto gastas aproximadamente a la semana en estas bebidas? (COP) — Variable cualitativa ordinal, 6 rangos, n = 80.</p>
+    </div>
+  </div>
+
+  <div class="g4" style="margin-bottom:20px;">
+    <div class="sc am"><div class="sc-lbl">Moda · rango más frecuente</div><div class="sc-val" style="font-size:20px;">$3k–$10k</div><div class="sc-sub">f = 27 · 33.8% · Moda</div></div>
+    <div class="sc sk"><div class="sc-lbl">Media ponderada estimada</div><div class="sc-val" style="font-size:20px;">$10,800</div><div class="sc-sub">COP/semana · marcas de clase</div></div>
+    <div class="sc mt"><div class="sc-lbl">Gastan algo (>$0)</div><div class="sc-val">85.0%</div><div class="sc-sub">68 de 80 invierten dinero</div></div>
+    <div class="sc ro"><div class="sc-lbl">Gasto alto (> $10k)</div><div class="sc-val">41.3%</div><div class="sc-sub">33 estudiantes · cola superior</div></div>
+  </div>
+
+  <div class="g2" style="margin-bottom:20px;">
+    <div class="cw">
+      <div class="cw-head">
+        <span class="cw-title">Distribución del gasto semanal (COP)</span>
+        <span class="cw-badge sk">Barras · n = 80</span>
+      </div>
+      <canvas id="chartGastoDist" height="250"></canvas>
+      <div style="margin-top:16px;" class="barchart">
+        <div class="bar-row"><div class="bar-lbl">$3.000–$10.000</div><div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,#c97d3e,#e8a05a);" data-w="33.8"></div></div><div class="bar-pct">33.8%</div></div>
+        <div class="bar-row"><div class="bar-lbl">$10.000–$20.000</div><div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,#5bb8f5,#88cff7);" data-w="23.8"></div></div><div class="bar-pct">23.8%</div></div>
+        <div class="bar-row"><div class="bar-lbl">Exactamente $3.000</div><div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,#9b86f5,#c4b8ff);" data-w="15.0"></div></div><div class="bar-pct">15.0%</div></div>
+        <div class="bar-row"><div class="bar-lbl">No gasto nada</div><div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,#6b6580,#8a849a);" data-w="10.0"></div></div><div class="bar-pct">10.0%</div></div>
+        <div class="bar-row"><div class="bar-lbl">$20.000–$25.000</div><div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,#4ecba0,#a0f5d8);" data-w="8.8"></div></div><div class="bar-pct">8.8%</div></div>
+        <div class="bar-row"><div class="bar-lbl">Más de $25.000</div><div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,#e86b8a,#f5a0b8);" data-w="8.8"></div></div><div class="bar-pct">8.8%</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Tabla de frecuencias · Gasto semanal (COP)</div>
+      <table class="tbl" style="margin-top:8px;">
+        <thead><tr><th>Rango (xᵢ)</th><th>Marca clase</th><th>fᵢ</th><th>Fᵢ</th><th>hᵢ%</th><th>Hᵢ%</th></tr></thead>
+        <tbody>
+          <tr><td class="hl">No gasto nada</td><td class="n">$0</td><td class="n">8</td><td class="n">8</td><td class="n">10.0%</td><td class="n">10.0%</td></tr>
+          <tr><td class="hl">$3.000</td><td class="n">$3,000</td><td class="n lv">12</td><td class="n">20</td><td class="n lv">15.0%</td><td class="n">25.0%</td></tr>
+          <tr><td class="hl" style="color:var(--amber2);">$3.000–$10.000 ★ Moda</td><td class="n">$6,500</td><td class="n" style="font-weight:700;color:var(--amber2);">27</td><td class="n">47</td><td class="n" style="color:var(--amber2);font-weight:700;">33.8%</td><td class="n" style="color:var(--mint);">58.8% ✓ Mediana</td></tr>
+          <tr><td class="hl">$10.000–$20.000</td><td class="n sk">$15,000</td><td class="n sk">19</td><td class="n">66</td><td class="n sk">23.8%</td><td class="n">82.5%</td></tr>
+          <tr><td class="hl">$20.000–$25.000</td><td class="n mt">$22,500</td><td class="n mt">7</td><td class="n">73</td><td class="n mt">8.8%</td><td class="n">91.3%</td></tr>
+          <tr><td class="hl">Más de $25.000</td><td class="n ro">$30,000*</td><td class="n ro">7</td><td class="n">80</td><td class="n ro">8.8%</td><td class="n">100.0%</td></tr>
+          <tr style="background:rgba(91,184,245,.06);font-weight:600;"><td style="color:var(--sky);">Total</td><td>—</td><td class="n" style="color:var(--sky);">80</td><td>—</td><td class="n" style="color:var(--sky);">100%</td><td>—</td></tr>
+        </tbody>
+      </table>
+
+      <div class="mono-box" style="margin-top:14px;">
+        <div class="lbl">Media ponderada estimada (marcas de clase)</div>
+        <div class="eq">x̄ = (8×$0 + 12×$3k + 27×$6.5k + 19×$15k + 7×$22.5k + 7×$30k) / 80</div>
+        <div class="eq" style="margin-top:4px;">x̄ = $864,000 / 80</div>
+        <div class="res" style="color:var(--sky);">x̄ ≈ <strong>$10,800 COP/semana</strong></div>
+      </div>
+
+      <div class="mono-box" style="margin-top:10px;">
+        <div class="lbl">Mediana (posición n/2 = 40 en frecuencia acumulada)</div>
+        <div class="eq">F acum. hasta "$3.000" = 20 → &lt; 40</div>
+        <div class="eq">F acum. hasta "$3k–$10k" = 47 → ≥ 40 ✓</div>
+        <div class="res" style="color:var(--mint);">Mediana: <strong>$3.000–$10.000</strong></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section reveal" id="gasto-frecuencia">
+  <div class="section-header">
+    <div class="sec-num">02.A</div>
+    <div>
+      <h2 class="sec-title">Gasto × <span style="color:var(--mint);">Frecuencia de consumo</span></h2>
+      <p class="sec-desc">¿A más frecuencia, más gasto? El cruce revela que los de mayor gasto consumen casi el doble de veces por semana que los de menor gasto.</p>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:20px;">
+    <div class="cw">
+      <div class="cw-head">
+        <span class="cw-title">Frecuencia media de consumo por rango de gasto</span>
+        <span class="cw-badge mt">Veces/semana promedio</span>
+      </div>
+      <canvas id="chartGastoFreq" height="280"></canvas>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card">
+        <div class="card-title">📋 Frecuencia media por categoría de gasto</div>
+        <table class="tbl" style="margin-top:8px;">
+          <thead><tr><th>Rango de gasto</th><th>n</th><th>Frec. media/sem</th></tr></thead>
+          <tbody>
+            <tr><td class="hl">No gasto nada</td><td class="n">8</td><td class="n" style="color:var(--text3);">3.75×</td></tr>
+            <tr><td class="hl">$3.000</td><td class="n lv">12</td><td class="n lv">3.33×</td></tr>
+            <tr><td class="hl" style="color:var(--amber2);">$3.000–$10.000 Moda</td><td class="n">27</td><td class="n am">3.56×</td></tr>
+            <tr><td class="hl" style="color:var(--sky);">$10.000–$20.000</td><td class="n sk">19</td><td class="n sk">5.05×</td></tr>
+            <tr><td class="hl" style="color:var(--mint);">$20.000–$25.000</td><td class="n mt">7</td><td class="n mt">4.57×</td></tr>
+            <tr><td class="hl">Más de $25.000</td><td class="n ro">7</td><td class="n ro" style="font-weight:700;">8.57×</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="insight mt">
+        <div class="insight-tag">📈 Relación positiva gasto-frecuencia</div>
+        <p>Quienes gastan más de $25,000/semana consumen en promedio <strong style="color:var(--text);">8.57 veces/semana</strong>, más del doble que el grupo de gasto medio (3.56×). Existe una <strong style="color:var(--text);">relación directa entre frecuencia e inversión económica</strong>.</p>
+      </div>
+      <div class="insight sk">
+        <div class="insight-tag">🤔 Dato curioso</div>
+        <p>El grupo "No gasto nada" tiene una frecuencia media de 3.75×/sem porque incluye 3 personas que responden "Nunca" y 5 que consumen pero no gastan (café de casa, obsequios o trabajo). No son no-consumidores.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section reveal" id="gasto-motivo">
+  <div class="section-header">
+    <div class="sec-num">02.B</div>
+    <div>
+      <h2 class="sec-title">Gasto × <span style="color:var(--lav);">Motivo de consumo</span></h2>
+      <p class="sec-desc">En los rangos de mayor gasto, el motivo "mantenerse despierto" desplaza a la costumbre. Los que más invierten lo hacen con un propósito funcional.</p>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:20px;">
+    <div class="cw">
+      <div class="cw-head">
+        <span class="cw-title">Motivo principal por rango de gasto semanal</span>
+        <span class="cw-badge lv">Barras apiladas</span>
+      </div>
+      <canvas id="chartGastoMotivo" height="300"></canvas>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card">
+        <div class="card-title">📋 Tabla cruzada · Gasto × Motivo</div>
+        <table class="tbl" style="margin-top:8px;">
+          <thead><tr><th>Gasto</th><th>Costumbre</th><th>Despierto</th><th>Sabor</th><th>Otro</th><th>Conc.</th></tr></thead>
+          <tbody>
+            <tr><td class="hl">No gasto nada</td><td class="n">4</td><td class="n">0</td><td class="n">1</td><td class="n ro">3</td><td class="n">0</td></tr>
+            <tr><td class="hl">$3.000</td><td class="n">4</td><td class="n">4</td><td class="n">3</td><td class="n">0</td><td class="n lv">1</td></tr>
+            <tr><td class="hl" style="color:var(--amber2);">$3k–$10k ★</td><td class="n">9</td><td class="n am">9</td><td class="n">6</td><td class="n">2</td><td class="n">1</td></tr>
+            <tr><td class="hl">$10k–$20k</td><td class="n sk">10</td><td class="n sk">8</td><td class="n">1</td><td class="n">0</td><td class="n">0</td></tr>
+            <tr><td class="hl">$20k–$25k</td><td class="n">2</td><td class="n mt">4</td><td class="n">0</td><td class="n ro">1</td><td class="n">0</td></tr>
+            <tr><td class="hl">Más de $25k</td><td class="n ro">3</td><td class="n ro">2</td><td class="n ro">2</td><td class="n">0</td><td class="n">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="insight lv">
+        <div class="insight-tag">🔍 Patrón de gasto alto</div>
+        <p>En los rangos de $20k+, "mantenerse despierto" rivaliza o supera a "costumbre". Los estudiantes con <strong style="color:var(--text);">gasto elevado tienen un propósito funcional claro</strong>, lo que explica su mayor disposición a pagar.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section reveal" id="gasto-efectos">
+  <div class="section-header">
+    <div class="sec-num">02.C</div>
+    <div>
+      <h2 class="sec-title">Gasto × <span style="color:var(--rose);">Efectos secundarios</span></h2>
+      <p class="sec-desc">Los estudiantes con mayor gasto presentan el mayor porcentaje de efectos adversos. A más inversión, más exposición a riesgos de salud.</p>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:20px;">
+    <div class="cw">
+      <div class="cw-head">
+        <span class="cw-title">% con efectos secundarios por rango de gasto</span>
+        <span class="cw-badge ro" style="background:rgba(232,107,138,.1);color:var(--rose);border-color:rgba(232,107,138,.2);">Datos reales</span>
+      </div>
+      <canvas id="chartGastoEfectos" height="280"></canvas>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card">
+        <div class="card-title">📋 Tabla cruzada · Gasto × Efectos</div>
+        <table class="tbl" style="margin-top:8px;">
+          <thead><tr><th>Gasto</th><th>n</th><th>Sin efectos</th><th>Con efectos</th><th>% efectos</th></tr></thead>
+          <tbody>
+            <tr><td class="hl">No gasto nada</td><td class="n">8</td><td class="n mt">8</td><td class="n">0</td><td class="n">0.0%</td></tr>
+            <tr><td class="hl">$3.000</td><td class="n lv">12</td><td class="n mt">9</td><td class="n ro">3</td><td class="n ro">25.0%</td></tr>
+            <tr><td class="hl" style="color:var(--amber2);">$3k–$10k ★</td><td class="n">27</td><td class="n mt">19</td><td class="n ro">8</td><td class="n ro">29.6%</td></tr>
+            <tr><td class="hl">$10k–$20k</td><td class="n sk">19</td><td class="n mt">11</td><td class="n ro">8</td><td class="n ro">42.1%</td></tr>
+            <tr><td class="hl">$20k–$25k</td><td class="n mt">7</td><td class="n mt">5</td><td class="n ro">2</td><td class="n ro">28.6%</td></tr>
+            <tr><td class="hl">Más de $25k</td><td class="n ro">7</td><td class="n mt">5</td><td class="n ro">2</td><td class="n ro">28.6%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="paradox-strip" style="margin-top:0;">
+        <div class="ps-left">
+          <div class="ps-label">💰 Gasto alto (&gt;$10k) — n=33</div>
+          <div style="font-family:var(--fh);font-size:36px;color:var(--rose);line-height:1;">36.4%</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:4px;">12 de 33 con efectos adversos</div>
+        </div>
+        <div class="ps-right">
+          <div class="ps-label">🍃 Gasto bajo (&lt;$10k) — n=47</div>
+          <div style="font-family:var(--fh);font-size:36px;color:var(--mint);line-height:1;">23.4%</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:4px;">11 de 47 con efectos adversos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section reveal" id="gasto-conclusion">
+  <div class="section-header">
+    <div class="sec-num">02.Z</div>
+    <div>
+      <h2 class="sec-title">Conclusión Docente · <span style="color:var(--sky);">Pregunta 2</span></h2>
+      <p class="sec-desc">Síntesis sustentada de todos los hallazgos sobre el gasto semanal en bebidas estimulantes.</p>
+    </div>
+  </div>
+
+  <div class="g3" style="margin-bottom:20px;">
+    <div class="insight sk" style="border-radius:var(--r-lg);padding:20px 22px;">
+      <div class="insight-tag">1. Medidas de tendencia central</div>
+      <p>Variable ordinal: Moda = <strong style="color:var(--text);">"$3k–$10k"</strong> (f=27, 33.8%). Mediana = mismo rango (F acum. cruza n/2=40 en ese intervalo). Media ponderada estimada = <strong style="color:var(--text);">$10,800/semana</strong> con marcas de clase.</p>
+    </div>
+    <div class="insight mt" style="border-radius:var(--r-lg);padding:20px 22px;">
+      <div class="insight-tag">2. Asimetría positiva</div>
+      <p>La distribución tiene <strong style="color:var(--text);">cola hacia el gasto alto</strong>: media ($10,800) &gt; marca de clase moda ($6,500). El 41.3% gasta más de $10,000/semana, impulsando el promedio por encima de la moda.</p>
+    </div>
+    <div class="insight ro" style="border-radius:var(--r-lg);padding:20px 22px;">
+      <div class="insight-tag">3. Impacto y riesgo</div>
+      <p>Mayor gasto = mayor frecuencia = mayor exposición. El grupo &gt;$25k consume 8.57 veces/semana. El gasto alto (>$10k) presenta <strong style="color:var(--text);">36.4% de efectos adversos</strong>, 13 puntos más que el grupo de gasto bajo.</p>
+    </div>
+  </div>
+
+  <div class="verdict sk-v">
+    <div class="verdict-tag">🎓 Respuesta completa · Para sustentar ante el docente</div>
+    <p>
+      La variable <em>"gasto semanal en bebidas estimulantes"</em> (cualitativa ordinal, 6 rangos, n=80) presenta su <strong style="color:var(--text);">moda en "$3,000–$10,000"</strong> (f=27, 33.8%) con mediana en el mismo intervalo —ambas medidas coinciden—. La media ponderada estimada con marcas de clase es <strong style="color:var(--sky);">$10,800 COP/semana</strong>, superior a la marca de la moda ($6,500), lo que evidencia una <strong style="color:var(--text);">distribución con asimetría positiva</strong> generada por el 41.3% que gasta más de $10,000 semanales[cite: 14]. El análisis cruzado confirma que el gasto crece con la frecuencia (el grupo &gt;$25k consume en promedio 8.57 veces/semana), que el motivo cambia de "costumbre" a "mantenerse despierto" en los rangos altos, y que los estudiantes de alto gasto tienen <strong style="color:var(--sky);">36.4% de efectos adversos</strong> vs 23.4% en los de bajo gasto. Proyectado, el gasto promedio equivale a <strong style="color:var(--text);">~$43,200 COP/mes</strong> por estudiante, evidenciando un impacto económico significativo y sostenido en el presupuesto estudiantil.
+    </p>
+  </div>
+</section>
+
+
+<section class="section reveal" id="conexion">
+  <div class="section-header">
+    <div class="sec-num">03</div>
+    <div>
+      <h2 class="sec-title">Conexión cruzada · <span style="color:var(--gold);">Q1 × Q2</span></h2>
+      <p class="sec-desc">Análisis del cruce entre percepción del rendimiento y gasto semanal: ¿los que más gastan son los que perciben más mejora?</p>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:20px;">
+    <div class="cw">
+      <div class="cw-head">
+        <span class="cw-title">Distribución del gasto por grupo de rendimiento percibido</span>
+        <span class="cw-badge" style="background:rgba(245,208,96,.1);color:var(--gold);border-color:rgba(245,208,96,.2);">Cruce final</span>
+      </div>
+      <canvas id="chartCruce" height="300"></canvas>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card">
+        <div class="card-title">📋 Gasto semanal del grupo "Mejora rendimiento" (n=11)</div>
+        <table class="tbl" style="margin-top:8px;">
+          <thead><tr><th>Rango de gasto</th><th>f</th><th>%</th></tr></thead>
+          <tbody>
+            <tr><td class="hl">$10.000–$20.000</td><td class="n sk" style="font-weight:700;">5</td><td class="n sk">45.5%</td></tr>
+            <tr><td class="hl">$20.000–$25.000</td><td class="n mt">2</td><td class="n mt">18.2%</td></tr>
+            <tr><td class="hl">Más de $25.000</td><td class="n ro">2</td><td class="n ro">18.2%</td></tr>
+            <tr><td class="hl">$3.000–$10.000</td><td class="n lv">1</td><td class="n lv">9.1%</td></tr>
+            <tr><td class="hl">No gasto nada</td><td class="n">1</td><td class="n">9.1%</td></tr>
+            <tr style="background:rgba(245,208,96,.06);font-weight:600;"><td style="color:var(--gold);">Total</td><td class="n" style="color:var(--gold);">11</td><td class="n" style="color:var(--gold);">100%</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:12px;padding:12px 14px;background:rgba(245,208,96,.07);border-radius:var(--r-md);border-left:3px solid var(--gold);">
+          <div style="font-size:10px;color:var(--gold);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;">Gasto promedio estimado del grupo "Mejora"</div>
+          <div style="font-family:var(--fm);font-size:18px;color:var(--gold);">~$16,955 COP/sem</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px;">vs $10,800 general → <strong style="color:var(--gold);">+56.9% más</strong></div>
+        </div>
+      </div>
+      <div class="insight" style="border-left-color:var(--gold);background:rgba(245,208,96,.07);border-radius:var(--r-md);">
+        <div class="insight-tag" style="color:var(--gold);">🔗 La paradoja del gasto-percepción</div>
+        <p>El <strong style="color:var(--text);">81.8%</strong> de quienes dicen que mejora su rendimiento gasta más de $10,000/semana. A mayor inversión, mayor necesidad de justificar el gasto con una percepción positiva: <strong style="color:var(--text);">sesgo de justificación del gasto</strong>. Los datos sugieren que no es que el gasto produzca mejora, sino que quienes ya gastan mucho <em>necesitan</em> creer que les beneficia.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ── Chart.js global defaults ──
+Chart.defaults.color = '#6b6580';
+Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.size = 10;
+
+const REND_LABELS = ['No tiene efecto','No estoy seguro/a','Mejora rendimiento','Lo empeora'];
+const REND_COLORS = ['#f5c27a','#9b86f5','#4ecba0','#e86b8a'];
+const GASTO_LABELS = ['No gasto','$3.000','$3k–$10k','$10k–$20k','$20k–$25k','>$25k'];
+const GASTO_COLORS = ['#6b6580','#9b86f5','#c97d3e','#5bb8f5','#4ecba0','#e86b8a'];
+
+function gridLine() { return 'rgba(255,255,255,0.04)'; }
+function noLegend() { return { display: false }; }
+
+// 1. Rendimiento distribución
+{
+  const ctx = document.getElementById('chartRendDist').getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: REND_LABELS,
+      datasets: [{ data: [44,24,11,1], backgroundColor: REND_COLORS, borderWidth: 0, hoverOffset: 10 }]
+    },
+    options: {
+      responsive: true, cutout: '62%',
+      plugins: {
+        legend: { position:'bottom', labels:{ font:{size:10}, padding:12, boxWidth:8, color:'#a8a2b8' } },
+        tooltip: { callbacks: { label: c => `${c.label}: ${c.raw} · ${(c.raw/80*100).toFixed(1)}%` } }
+      }
+    }
+  });
+}
+
+// 2. Rendimiento × Efectos (grouped bar)
+{
+  const ctx = document.getElementById('chartRendEfectos').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: REND_LABELS,
+      datasets: [
+        { label: 'Sin efectos', data: [35,15,6,1], backgroundColor: 'rgba(78,203,160,0.7)', borderRadius: 5, borderSkipped: false },
+        { label: 'Con efectos', data: [9,9,5,0], backgroundColor: 'rgba(232,107,138,0.75)', borderRadius: 5, borderSkipped: false }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position:'bottom', labels:{ font:{size:10}, padding:12, boxWidth:10, color:'#a8a2b8' } },
+        tooltip: {
+          callbacks: {
+            afterBody: (items) => {
+              const idx = items[0].dataIndex;
+              const totals = [44,24,11,1];
+              const withEf = [9,9,5,0];
+              return [`% con efectos: ${(withEf[idx]/totals[idx]*100).toFixed(1)}%`];
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid:{ display:false }, ticks:{ font:{size:9}, maxRotation:20 } },
+        y: { grid:{ color:gridLine() }, ticks:{ font:{size:9}, stepSize:5 } }
+      }
+    }
+  });
+}
+
+// 3. Rendimiento × Motivo (stacked bar)
+{
+  const ctx = document.getElementById('chartRendMotivo').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: REND_LABELS,
+      datasets: [
+        { label: 'Costumbre',          data: [22,8,1,1], backgroundColor: 'rgba(201,125,62,0.8)',  borderRadius:4, borderSkipped:false },
+        { label: 'Mantenerse despierto', data:[9,8,10,0], backgroundColor:'rgba(91,184,245,0.8)', borderRadius:4, borderSkipped:false },
+        { label: 'Sabor',              data: [10,3,0,0],  backgroundColor: 'rgba(78,203,160,0.7)', borderRadius:4, borderSkipped:false },
+        { label: 'Otro / Concentración', data:[3,5,0,0], backgroundColor:'rgba(155,134,245,0.7)', borderRadius:4, borderSkipped:false }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position:'bottom', labels:{ font:{size:10}, padding:10, boxWidth:9, color:'#a8a2b8' } }
+      },
+      scales: {
+        x: { stacked:true, grid:{ display:false }, ticks:{ font:{size:9}, maxRotation:20 } },
+        y: { stacked:true, grid:{ color:gridLine() }, ticks:{ font:{size:9} } }
+      }
+    }
+  });
+}
+
+// 4. Rendimiento × Bebida (stacked bar)
+{
+  const ctx = document.getElementById('chartRendBebida').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: REND_LABELS,
+      datasets: [
+        { label: 'Solo Café',       data:[28,9,1,1], backgroundColor:'rgba(201,125,62,0.8)', borderRadius:4, borderSkipped:false },
+        { label: 'Café + Energét.', data:[9,7,7,0],  backgroundColor:'rgba(232,107,138,0.75)', borderRadius:4, borderSkipped:false },
+        { label: 'Solo Energéticas',data:[4,6,3,0],  backgroundColor:'rgba(91,184,245,0.8)', borderRadius:4, borderSkipped:false },
+        { label: 'Ninguna / Otros', data:[3,2,0,0],  backgroundColor:'rgba(155,134,245,0.6)', borderRadius:4, borderSkipped:false }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend:{ position:'bottom', labels:{ font:{size:10}, padding:10, boxWidth:9, color:'#a8a2b8' } } },
+      scales: {
+        x: { stacked:true, grid:{ display:false }, ticks:{ font:{size:9}, maxRotation:20 } },
+        y: { stacked:true, grid:{ color:gridLine() }, ticks:{ font:{size:9} } }
+      }
+    }
+  });
+}
+
+// 5. Rendimiento × Género
+{
+  const ctx = document.getElementById('chartRendGenero').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Femenino (n=40)', 'Masculino (n=38)'],
+      datasets: [
+        { label: 'No tiene efecto', data:[23,20], backgroundColor:'rgba(245,194,122,0.8)', borderRadius:4, borderSkipped:false },
+        { label: 'No estoy seguro', data:[13,10], backgroundColor:'rgba(155,134,245,0.8)', borderRadius:4, borderSkipped:false },
+        { label: 'Mejora rendimiento', data:[3,8], backgroundColor:'rgba(78,203,160,0.9)', borderRadius:4, borderSkipped:false },
+        { label: 'Lo empeora',       data:[1,0],  backgroundColor:'rgba(232,107,138,0.8)', borderRadius:4, borderSkipped:false }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend:{ position:'bottom', labels:{ font:{size:10}, padding:10, boxWidth:9, color:'#a8a2b8' } } },
+      scales: {
+        x: { stacked:true, grid:{ display:false }, ticks:{ font:{size:11} } },
+        y: { stacked:true, grid:{ color:gridLine() }, ticks:{ font:{size:9} } }
+      }
+    }
+  });
+}
+
+// 6. Gasto distribución
+{
+  const ctx = document.getElementById('chartGastoDist').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: GASTO_LABELS,
+      datasets: [{
+        data: [8,12,27,19,7,7],
+        backgroundColor: GASTO_COLORS.map(c => c + 'CC'),
+        borderColor: GASTO_COLORS,
+        borderWidth: 1.5,
+        borderRadius: 7,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: noLegend(),
+        tooltip: { callbacks: { label: c => `${c.raw} est. (${(c.raw/80*100).toFixed(1)}%)` } }
+      },
+      scales: {
+        x: { grid:{ display:false }, ticks:{ font:{size:10} } },
+        y: { grid:{ color:gridLine() }, ticks:{ font:{size:9}, stepSize:5 } }
+      }
+    }
+  });
+}
+
+// 7. Gasto × Frecuencia media
+{
+  const ctx = document.getElementById('chartGastoFreq').getContext('2d');
+  const freqs = [3.75, 3.33, 3.56, 5.05, 4.57, 8.57];
+  const colors = GASTO_COLORS.map((c,i) => freqs[i] > 5 ? '#e86b8a' : freqs[i] > 4 ? '#5bb8f5' : 'rgba(201,125,62,0.75)');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: GASTO_LABELS,
+      datasets: [{
+        label: 'Veces/semana promedio',
+        data: freqs,
+        backgroundColor: colors,
+        borderRadius: 7, borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: noLegend(),
+        tooltip: { callbacks: { label: c => `${c.raw} veces/semana prom.` } }
+      },
+      scales: {
+        x: { grid:{ display:false }, ticks:{ font:{size:10} } },
+        y: {
+          grid:{ color:gridLine() },
+          ticks:{ font:{size:9} },
+          title:{ display:true, text:'veces/semana', font:{size:10}, color:'#6b6580' }
+        }
+      }
+    }
+  });
+}
+
+// 8. Gasto × Motivo (stacked)
+{
+  const ctx = document.getElementById('chartGastoMotivo').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: GASTO_LABELS,
+      datasets: [
+        { label:'Costumbre',      data:[4,4,9,10,2,3], backgroundColor:'rgba(201,125,62,0.8)', borderRadius:4, borderSkipped:false },
+        { label:'Despierto',      data:[0,4,9,8,4,2],  backgroundColor:'rgba(91,184,245,0.8)', borderRadius:4, borderSkipped:false },
+        { label:'Sabor',          data:[1,3,6,1,0,2],  backgroundColor:'rgba(78,203,160,0.7)', borderRadius:4, borderSkipped:false },
+        { label:'Otro/Conc.',     data:[3,1,3,0,1,0],  backgroundColor:'rgba(155,134,245,0.7)', borderRadius:4, borderSkipped:false }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend:{ position:'bottom', labels:{ font:{size:10}, padding:10, boxWidth:9, color:'#a8a2b8' } } },
+      scales: {
+        x: { stacked:true, grid:{ display:false }, ticks:{ font:{size:10} } },
+        y: { stacked:true, grid:{ color:gridLine() }, ticks:{ font:{size:9} } }
+      }
+    }
+  });
+}
+
+// 9. Gasto × Efectos
+{
+  const ctx = document.getElementById('chartGastoEfectos').getContext('2d');
+  const pcts = [0, 25.0, 29.6, 42.1, 28.6, 28.6];
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: GASTO_LABELS,
+      datasets: [{
+        label: '% con efectos secundarios',
+        data: pcts,
+        backgroundColor: pcts.map(p => p > 35 ? 'rgba(232,107,138,0.85)' : p > 25 ? 'rgba(232,107,138,0.55)' : 'rgba(78,203,160,0.6)'),
+        borderRadius: 7, borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: noLegend(),
+        tooltip: { callbacks: { label: c => `${c.raw.toFixed(1)}% con efectos adversos` } }
+      },
+      scales: {
+        x: { grid:{ display:false }, ticks:{ font:{size:10} } },
+        y: {
+          grid:{ color:gridLine() }, max: 55,
+          ticks:{ font:{size:9}, callback: v => v + '%' },
+          title:{ display:true, text:'% con efectos', font:{size:10}, color:'#6b6580' }
+        }
+      }
+    }
+  });
+}
+
+// 10. Cruce Q1 × Q2 (stacked con los 4 grupos de rendimiento)
+{
+  const ctx = document.getElementById('chartCruce').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: GASTO_LABELS,
+      datasets: [
+        { label: 'No tiene efecto', data:[1,11,15,12,2,3], backgroundColor:'rgba(245,194,122,0.75)', borderRadius:4, borderSkipped:false },
+        { label: 'No estoy seguro', data:[6,1,10,2,3,2],   backgroundColor:'rgba(155,134,245,0.75)', borderRadius:4, borderSkipped:false },
+        { label: 'Mejora',          data:[1,0,1,5,2,2],    backgroundColor:'rgba(78,203,160,0.9)',   borderRadius:4, borderSkipped:false },
+        { label: 'Lo empeora',      data:[0,0,1,0,0,0],    backgroundColor:'rgba(232,107,138,0.85)', borderRadius:4, borderSkipped:false }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend:{ position:'bottom', labels:{ font:{size:10}, padding:10, boxWidth:9, color:'#a8a2b8' } } },
+      scales: {
+        x: { stacked:true, grid:{ display:false }, ticks:{ font:{size:10} } },
+        y: { stacked:true, grid:{ color:gridLine() }, ticks:{ font:{size:9} } }
+      }
+    }
+  });
+}
+
+// ── ANIMATIONS ──
+window.addEventListener('scroll', () => {
+  const doc = document.documentElement;
+  document.getElementById('progress').style.width = (doc.scrollTop / (doc.scrollHeight - doc.clientHeight) * 100) + '%';
+});
+
+const obs = new IntersectionObserver(e => e.forEach(en => { if (en.isIntersecting) en.target.classList.add('visible'); }), { threshold: 0.06 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+const navObs = new IntersectionObserver(e => {
+  e.forEach(en => {
+    if (en.isIntersecting) {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      const a = document.querySelector(`.nav-item[href="#${en.target.id}"]`);
+      if (a) a.classList.add('active');
+    }
+  });
+}, { threshold: 0.35 });
+document.querySelectorAll('section[id]').forEach(s => navObs.observe(s));
+
+setTimeout(() => {
+  document.querySelectorAll('.bar-fill[data-w]').forEach(b => { b.style.width = b.dataset.w + '%'; });
+}, 600);
+</script>
+</body>
+</html>
